@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-align: center;
+            margin-block: 20px;
+            color: #4a4a4a;
+        }
+
+        .back-link {
+            color: #0099ff;
+            font-size: 30px;
+            margin: 20px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: red;
+            background-color: mistyrose;
+            border-radius: 5px;
+            font-size: 30px;
+            text-align: center;
+            margin-bottom: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: none;
+        }
+
+        .info-message {
+            color: #008000;
+            background-color: #E3FFC7;
+            border-radius: 5px;
+            font-size: 30px;
+            text-align: center;
+            margin-bottom: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.5em;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+            th:hover {
+                background-color: #0056b3;
+            }
+
+        tr:hover {
+            background-color: #e4e4e4;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.8);
+        }
+
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            border: 3px solid #007bff;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            transition: 1s ease;
+        }
+
+            button:hover {
+                border: 3px solid #0056b3;
+                background-color: #0056b3;
+            }
+
+            button:disabled {
+                border: 3px solid #999;
+                background-color: #ccc;
+                color: #666;
+                cursor: not-allowed;
+            }
+
+        .approve-button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            border: 3px solid #28a745;
+            border-radius: 4px;
+            background-color: #28a745;
+            color: white;
+            transition: 1s ease;
+        }
+
+            .approve-button:hover {
+                border: 3px solid #218838;
+                background-color: #218838;
+            }
+
+                .approve-button:hover:disabled {
+                    border: 3px solid #999;
+                    background-color: #ccc;
+                    color: #666;
+                    cursor: not-allowed;
+                }
+
+        .danger-button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            border: 3px solid #ff4d4d;
+            border-radius: 4px;
+            background-color: #ff4d4d;
+            color: white;
+            transition: 0.5s ease;
+        }
+
+            .danger-button:hover {
+                border: 3px solid #e63939;
+                color: #e63939;
+                background-color: #e4e4e4;
+            }
+
+        #paginationControlContainer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: end;
+        }
+
+        .paginationControls {
+            margin-inline: 10px;
+        }
+
+        #pageInfo {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-inline: 15px;
+        }
+
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 30%;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .modal h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .confirm-text {
+            margin-block: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        .confirm-button {
+            background-color: #ff4d4d;
+            color: white;
+            margin-top: 10px;
+            padding: 10px;
+            border: 4px solid #ff4d4d;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.5s ease;
+        }
+
+            .confirm-button:hover {
+                border: 4px solid #e63939;
+                color: #e63939;
+                background-color: white;
+            }
+
+        .confirm-text {
+            margin-block: 10px;
+            color: black;
+            font-weight: bold;
+        }
+
+        .modal-button {
+            background-color: #007bff;
+            color: white;
+            margin-top: 10px;
+            padding: 10px;
+            border: 4px solid #007bff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.5s ease;
+        }
+
+            .modal-button:hover {
+                border: 4px solid #0056b3;
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <div onclick="window.history.back();" class="back-link">&lt; Go Back</div>
+    <h1>File Management</h1>
+    <div class="info-message" id="info-message"></div>
+    <div class="error-message" id="error-message"></div>
+    <table id="fileTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable('filename')">Filename <span class="sort-indicator" id="filename_sort"></span></th>
+                <th onclick="sortTable('title')">Title <span class="sort-indicator" id="title_sort"></span></th>
+                <th onclick="sortTable('creator')">Creator <span class="sort-indicator" id="creator_sort"></span></th>
+                <th onclick="sortTable('added_time')">Added Time <span class="sort-indicator" id="added_time_sort"></span></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="fileList"></tbody>
+    </table>
+    <div id="paginationControlContainer">
+        <button class="paginationControls" onclick="loadFiles(1)" id="firstPage">First</button>
+        <button class="paginationControls" onclick="loadFiles(currentPage - 1)" id="prevPage">Previous</button>
+        <span class="paginationControls" id="pageInfo"></span>
+        <button class="paginationControls" onclick="loadFiles(currentPage + 1)" id="nextPage">Next</button>
+        <button class="paginationControls" onclick="loadFiles(totalPages)" id="lastPage">Last</button>
+    </div>
+    <div id="view-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-view-details-modal">&times;</span>
+            <h2>File Details</h2>
+            <div class="confirm-text">Filename:<br /><span id="file-details-filename"></span></div>
+            <div class="confirm-text">Title:<br /><span id="file-details-title"></span></div>
+            <div class="confirm-text">Description:<br /><span id="file-details-description"></span></div>
+            <div class="confirm-text">Creator:<br /><span id="file-details-creator"></span></div>
+            <div class="confirm-text">Added Time:<br /><span id="file-details-added-time"></span></div>
+            <button class="modal-button" id="close-details">Close</button>
+        </div>
+    </div>
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-delete-confirm-modal">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <div class="confirm-text">Once you delete a file, there is no going back. Please be certain.<br />Confirm deletion of <span id="file-to-delete"></span>?</div>
+            <button class="confirm-button" id="confirm-delete">Confirm Delete</button>
+        </div>
+    </div>
+    <script>
+        const infoMessageDiv = document.getElementById('info-message');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        var viewDetailsModal = document.getElementById("view-details-modal");
+        var deleteConfirmModal = document.getElementById("delete-confirm-modal");
+
+        let currentPage = parseInt(localStorage.getItem('admin/files/currentPage')) || 1;
+        let pageSize = 10;
+        let totalPages = 1;
+        let currentSortField = localStorage.getItem('admin/files/currentSortField') || 'filename';
+        let currentSortOrder = localStorage.getItem('admin/files/currentSortOrder') || 'asc';
+
+        updateSortIndicators();
+        loadFiles();
+
+        const encryptor = new JSEncrypt();
+
+        fetch('/public_key')
+            .then(response => {
+                if (response.ok) {
+                    return response.text().then(text => {
+                        encryptor.setPublicKey(text);
+                    });
+                } else {
+                    response.text()
+                        .then(text => {
+                            throw new Error('Unexpected response: ' + response.status + " " + text);
+                        });
+                }
+            })
+            .catch(error => {
+                errorMessageDiv.textContent = 'Error: ' + error.message;
+                errorMessageDiv.style.display = 'block';
+            });
+
+        function updatePagination() {
+            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById("firstPage").disabled = currentPage == 1;
+            document.getElementById("lastPage").disabled = currentPage == totalPages;
+            document.getElementById("prevPage").disabled = currentPage <= 1;
+            document.getElementById("nextPage").disabled = currentPage >= totalPages;
+        }
+
+        function loadFiles(page = currentPage) {
+            fetch(`/admin/list_files?page=${page}&page_size=${pageSize}&sort_field=${currentSortField}&sort_order=${currentSortOrder}`)
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById("fileList");
+                    table.innerHTML = '';
+                    const fileListData = data.fileList;
+                    fileListData.forEach(item => {
+                        const row = document.createElement('tr');
+
+                        const filenameCell = document.createElement('td');
+                        if (item.filename.length > 30) {
+                            filenameCell.textContent = item.filename.slice(0, 22) + "..." + item.filename.slice(-5);
+                        } else {
+                            filenameCell.textContent = item.filename;
+                        }
+                        row.appendChild(filenameCell);
+
+                        const titleCell = document.createElement('td');
+                        if (item.title.length > 30) {
+                            titleCell.textContent = item.title.slice(0, 22) + "..." + item.title.slice(-5);
+                        } else {
+                            titleCell.textContent = item.title;
+                        }
+                        row.appendChild(titleCell);
+
+                        const creatorCell = document.createElement('td');
+                        creatorCell.textContent = item.creator;
+                        row.appendChild(creatorCell);
+
+                        const addedTimeCell = document.createElement('td');
+                        addedTimeCell.textContent = item.addedTime;
+                        row.appendChild(addedTimeCell);
+
+                        const actionsCell = document.createElement('td');
+                        const downloadButton = document.createElement('button');
+                        downloadButton.textContent = 'Download';
+                        downloadButton.onclick = () => {
+                            document.getElementById("file-details-filename").textContent = item.filename;
+                            document.getElementById("file-details-title").textContent = item.title;
+                            document.getElementById("file-details-description").textContent = item.description;
+                            document.getElementById("file-details-creator").textContent = item.creator;
+                            document.getElementById("file-details-added-time").textContent = item.addedTime;
+                            document.getElementById("file-details-approved").textContent = item.approved;
+                            fetch(`/admin/download_file?filename=${item.filename}`)
+                                .then(response => {
+                                    if (response.ok) {
+                                        response.blob()
+                                            .then(blob => {
+                                                const url = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                const contentDisposition = response.headers.get('Content-Disposition');
+                                                let filename = item.filename; // Default filename
+                                                if (contentDisposition) {
+                                                    const match = contentDisposition.match(/filename="(.+)"/);
+                                                    if (match && match[1]) {
+                                                        filename = match[1];
+                                                    }
+                                                }
+                                                a.download = filename;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                a.remove();
+                                                infoMessageDiv.textContent = "Downloaded File " + item.filename;
+                                                infoMessageDiv.style.display = 'block';
+                                                setTimeout(() => {
+                                                    infoMessageDiv.style.display = 'none';
+                                                }, 3000);
+                                            })
+                                    } else {
+                                        response.text()
+                                            .then(text => {
+                                                errorMessageDiv.textContent = text;
+                                                errorMessageDiv.style.display = 'block';
+                                            });
+                                    }
+                                })
+                        };
+                        actionsCell.appendChild(downloadButton);
+                        const detailsButton = document.createElement('button');
+                        detailsButton.textContent = 'Details';
+                        detailsButton.onclick = () => {
+                            document.getElementById("file-details-filename").textContent = item.filename;
+                            document.getElementById("file-details-title").textContent = item.title;
+                            document.getElementById("file-details-description").textContent = item.description;
+                            document.getElementById("file-details-creator").textContent = item.creator;
+                            document.getElementById("file-details-added-time").textContent = item.addedTime;
+                            document.getElementById("file-details-approved").textContent = item.approved;
+                            viewDetailsModal.style.display = "flex";
+                        };
+                        actionsCell.appendChild(detailsButton);
+                        const deleteButton = document.createElement('button');
+                        deleteButton.setAttribute("class", "danger-button");
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => {
+                            document.getElementById("file-to-delete").textContent = item.filename;
+                            deleteConfirmModal.style.display = "flex";
+                        };
+                        actionsCell.appendChild(deleteButton);
+                        row.appendChild(actionsCell);
+
+                        table.appendChild(row);
+                    });
+                    totalPages = parseInt((data.totalFiles + pageSize - 1) / pageSize);
+                    currentPage = page;
+                    localStorage.setItem('admin/files/currentPage', currentPage);
+                    updatePagination();
+                });
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sort-indicator').forEach(indicator => {
+                indicator.textContent = '';
+            });
+
+            const indicator = document.getElementById(currentSortField + '_sort');
+            if (currentSortOrder === 'asc') {
+                indicator.textContent = '⇧';
+            } else {
+                indicator.textContent = '⇩';
+            }
+        }
+
+        function sortTable(field) {
+            if (currentSortField === field) {
+                currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortOrder = 'asc';
+            }
+            localStorage.setItem('admin/files/currentSortField', currentSortField);
+            localStorage.setItem('admin/files/currentSortOrder', currentSortOrder);
+            updateSortIndicators();
+            loadFiles();
+        }
+
+        window.onclick = function (event) {
+            if (event.target == viewDetailsModal) {
+                viewDetailsModal.style.display = "none";
+            } else if (event.target == deleteConfirmModal) {
+                deleteConfirmModal.style.display = "none";
+            }
+        }
+
+        document.getElementById("close-view-details-modal").onclick = function () {
+            viewDetailsModal.style.display = "none";
+        }
+
+        document.getElementById("close-details").onclick = function () {
+            viewDetailsModal.style.display = "none";
+        }
+
+        document.getElementById("close-delete-confirm-modal").onclick = function () {
+            deleteConfirmModal.style.display = "none";
+        }
+
+        document.getElementById('confirm-delete').addEventListener('click', function (event) {
+            const formData = new FormData();
+
+            const filename = document.getElementById("file-to-delete").textContent;
+
+            deleteConfirmModal.style.display = "none";
+            errorMessageDiv.style.display = 'none';
+
+            const encryptedFilename = encryptor.encrypt(filename);
+            formData.append("filename", encryptedFilename);
+
+            fetch('/admin/delete_file', {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else if (response.status === 403 || response.status === 400) {
+                        return response.text().then(text => {
+                            errorMessageDiv.textContent = text;
+                            errorMessageDiv.style.display = 'block';
+                        });
+                    } else {
+                        response.text()
+                            .then(text => {
+                                throw new Error('Unexpected response: ' + response.status + " " + text);
+                            });
+                    }
+                })
+                .catch(error => {
+                    errorMessageDiv.textContent = 'Error: ' + error.message;
+                    errorMessageDiv.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+
+        #dashboard-container {
+            max-width: 900px;
+            width: 90%;
+            margin: auto;
+            padding: 2em;
+            text-align: center;
+        }
+
+        #appList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 1.5em;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 1.5s ease, box-shadow 0.3s ease;
+            will-change: transform;
+        }
+
+            .card:hover {
+                transform: scale(1.1);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            .card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                opacity: 0.1;
+                z-index: 0;
+            }
+
+            .card span {
+                font-size: 2em;
+                font-weight: bold;
+                z-index: 1;
+                position: relative;
+            }
+
+            /* Gradient backgrounds for cards */
+            .card.blue {
+                background: linear-gradient(135deg, #36d1dc, #5b86e5);
+            }
+
+            .card.purple {
+                background: linear-gradient(135deg, #a55eea, #8854d0);
+            }
+
+            .card.orange {
+                background: linear-gradient(135deg, #f6d365, #fda085);
+            }
+
+            .card.red {
+                background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            }
+
+            .card.green {
+                background: linear-gradient(135deg, #42e695, #3bb2b8);
+            }
+
+            .card.yellow {
+                background: linear-gradient(135deg, #fbc740, #f4e04d);
+            }
+
+            .card.pink {
+                background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            }
+
+            .card.teal {
+                background: linear-gradient(135deg, #43e97b, #38f9d7);
+            }
+
+            .card.violet {
+                background: linear-gradient(135deg, #7f00ff, #e100ff);
+            }
+
+            .card.cyan {
+                background: linear-gradient(135deg, #67d4ff, #00aaff);
+            }
+    </style>
+</head>
+<body>
+    <div id="dashboard-container">
+        <h1>Welcome to Your Dashboard!</h1>
+        <div id="appList"></div>
+    </div>
+
+    <script>
+        loadApps();
+
+        function loadApps() {
+            const colors = [
+                'blue', 'purple', 'orange', 'red', 'green', 'yellow',
+                'pink', 'teal', 'violet', 'cyan'
+            ];
+            fetch(`/apps`)
+            .then(response => response.json())
+            .then(data => {
+                const appListDiv = document.getElementById("appList");
+                appListDiv.textContent = '';
+                data.forEach((item, index) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.classList.add('card', colors[index % colors.length]);
+                    cardDiv.onclick = () => window.location.href = item.endpoint; // Make the whole card clickable
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.innerText = item.name || '';
+
+                    cardDiv.appendChild(valueSpan);
+
+                    appListDiv.appendChild(cardDiv);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

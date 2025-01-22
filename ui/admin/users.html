@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-align: center;
+            margin-block: 20px;
+            color: #4a4a4a;
+        }
+
+        .back-link {
+            color: #0099ff;
+            font-size: 30px;
+            margin: 20px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: red;
+            background-color: mistyrose;
+            border-radius: 5px;
+            font-size: 30px;
+            text-align: center;
+            margin-bottom: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.5em;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+            th:hover {
+                background-color: #0056b3;
+            }
+
+        tr:hover {
+            background-color: #e4e4e4;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.8);
+        }
+
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            border: 3px solid #007bff;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            transition: 1s ease;
+        }
+
+            button:hover {
+                border: 3px solid #0056b3;
+                background-color: #0056b3;
+            }
+
+            button:disabled {
+                border: 3px solid #999;
+                background-color: #ccc;
+                color: #666;
+                cursor: not-allowed;
+            }
+
+        .danger-button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            border: 3px solid #ff4d4d;
+            border-radius: 4px;
+            background-color: #ff4d4d;
+            color: white;
+            transition: 0.5s ease;
+        }
+
+            .danger-button:hover {
+                border: 3px solid #e63939;
+                color: #e63939;
+                background-color: #e4e4e4;
+            }
+
+        #paginationControlContainer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: end;
+        }
+
+        .paginationControls {
+            margin-inline: 10px;
+        }
+
+        #pageInfo {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-inline: 15px;
+        }
+
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 30%;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .modal h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .confirm-text {
+            margin-block: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        .confirm-button {
+            background-color: #ff4d4d;
+            color: white;
+            margin-top: 10px;
+            padding: 10px;
+            border: 4px solid #ff4d4d;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.5s ease;
+        }
+
+            .confirm-button:hover {
+                border: 4px solid #e63939;
+                color: #e63939;
+                background-color: white;
+            }
+    </style>
+</head>
+<body>
+    <div onclick="window.history.back();" class="back-link">&lt; Go Back</div>
+    <h1>User Management</h1>
+    <div class="error-message" id="error-message"></div>
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable('username')">Username <span class="sort-indicator" id="username_sort"></span></th>
+                <th onclick="sortTable('is_admin')">Admin <span class="sort-indicator" id="is_admin_sort"></span></th>
+                <th onclick="sortTable('registration_time')">Registration Time <span class="sort-indicator" id="registration_time_sort"></span></th>
+                <th onclick="sortTable('last_login_time')">Last Login Time <span class="sort-indicator" id="last_login_time_sort"></span></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userList"></tbody>
+    </table>
+    <div id="paginationControlContainer">
+        <button class="paginationControls" onclick="loadUsers(1)" id="firstPage">First</button>
+        <button class="paginationControls" onclick="loadUsers(currentPage - 1)" id="prevPage">Previous</button>
+        <span class="paginationControls" id="pageInfo"></span>
+        <button class="paginationControls" onclick="loadUsers(currentPage + 1)" id="nextPage">Next</button>
+        <button class="paginationControls" onclick="loadUsers(totalPages)" id="lastPage">Last</button>
+    </div>
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <div class="confirm-text">Once you delete an account, there is no going back. Please be certain.<br />Confirm deletion of <span id="user-to-delete"></span>?</div>
+            <button class="confirm-button" id="confirm-delete">Confirm Delete</button>
+        </div>
+    </div>
+    <script>
+        const errorMessageDiv = document.getElementById('error-message');
+
+        var modal = document.getElementById("delete-confirm-modal");
+
+        let currentPage = parseInt(localStorage.getItem('admin/users/currentPage')) || 1;
+        let pageSize = 10;
+        let totalPages = 1;
+        let currentSortField = localStorage.getItem('admin/users/currentSortField') || 'username';
+        let currentSortOrder = localStorage.getItem('admin/users/currentSortOrder') || 'asc';
+
+        updateSortIndicators();
+        loadUsers();
+
+        const encryptor = new JSEncrypt();
+
+        fetch('/public_key')
+        .then(response => {
+            if (response.ok) {
+                return response.text().then(text => {
+                    encryptor.setPublicKey(text);
+                });
+            } else {
+                response.text()
+                .then(text => {
+                    throw new Error('Unexpected response: ' + response.status + " " + text);
+                });
+            }
+        })
+        .catch(error => {
+            errorMessageDiv.textContent = 'Error: ' + error.message;
+            errorMessageDiv.style.display = 'block';
+        });
+
+        function updatePagination() {
+            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById("firstPage").disabled = currentPage == 1;
+            document.getElementById("lastPage").disabled = currentPage == totalPages;
+            document.getElementById("prevPage").disabled = currentPage <= 1;
+            document.getElementById("nextPage").disabled = currentPage >= totalPages;
+        }
+
+        function loadUsers(page = currentPage) {
+            fetch(`/admin/list_users?page=${page}&page_size=${pageSize}&sort_field=${currentSortField}&sort_order=${currentSortOrder}`)
+            .then(response => response.json())
+            .then(data => {
+                const table = document.getElementById("userList");
+                table.innerHTML = '';
+                const userListData = data.userList;
+                userListData.forEach(item => {
+                    const row = document.createElement('tr');
+
+                    const usernameCell = document.createElement('td');
+                    usernameCell.textContent = item.username;
+                    row.appendChild(usernameCell);
+
+                    const isAdminCell = document.createElement('td');
+                    const isAdminCheckbox = document.createElement('input');
+                    isAdminCheckbox.type = "checkbox";
+                    isAdminCheckbox.ariaLabel = "Is Admin";
+                    isAdminCheckbox.checked = item.isAdmin === "Yes";
+                    isAdminCheckbox.onchange = () => {
+                        item.isAdmin = (isAdminCheckbox.checked ? "Yes" : "No");
+                    };
+                    isAdminCell.appendChild(isAdminCheckbox);
+                    row.appendChild(isAdminCell);
+
+                    const registrationTimeCell = document.createElement('td');
+                    registrationTimeCell.textContent = item.registrationTime;
+                    row.appendChild(registrationTimeCell);
+
+                    const lastLoginTimeCell = document.createElement('td');
+                    lastLoginTimeCell.textContent = item.lastLoginTime;
+                    row.appendChild(lastLoginTimeCell);
+
+                    const actionsCell = document.createElement('td');
+                    const updateButton = document.createElement('button');
+                    updateButton.textContent = 'Update';
+                    updateButton.onclick = () => {
+                        const formData = new FormData();
+
+                        const username = item.username;
+                        const isAdmin = item.isAdmin;
+
+                        const encryptedUsername = encryptor.encrypt(username);
+                        const encryptedIsAdmin = encryptor.encrypt(isAdmin);
+                        formData.append("username", encryptedUsername);
+                        formData.append("is_admin", encryptedIsAdmin);
+
+                        fetch('/admin/update_user', {
+                            method: 'POST',
+                            body: formData,
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                if (response.redirected) {
+                                    window.location.href = response.url;
+                                }
+                                else {
+                                    location.reload();
+                                }
+                            } else if (response.status === 400) {
+                                location.reload();
+                            } else if (response.status === 403) {
+                                return response.text().then(text => {
+                                    errorMessageDiv.textContent = text;
+                                    errorMessageDiv.style.display = 'block';
+                                });
+                            } else {
+                                response.text()
+                                .then(text => {
+                                    throw new Error('Unexpected response: ' + response.status + " " + text);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            errorMessageDiv.textContent = 'Error: ' + error.message;
+                            errorMessageDiv.style.display = 'block';
+                        });
+                    };
+                    actionsCell.appendChild(updateButton);
+                    const deleteButton = document.createElement('button');
+                    deleteButton.setAttribute("class", "danger-button");
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => {
+                        document.getElementById("user-to-delete").textContent = item.username;
+                        modal.style.display = "flex";
+                    };
+                    actionsCell.appendChild(deleteButton);
+                    row.appendChild(actionsCell);
+
+                    table.appendChild(row);
+                });
+                totalPages = parseInt((data.totalUsers + pageSize - 1) / pageSize);
+                currentPage = page;
+                localStorage.setItem('admin/users/currentPage', currentPage);
+                updatePagination();
+            });
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sort-indicator').forEach(indicator => {
+                indicator.textContent = '';
+            });
+
+            const indicator = document.getElementById(currentSortField + '_sort');
+            if (currentSortOrder === 'asc') {
+                indicator.textContent = '⇧';
+            } else {
+                indicator.textContent = '⇩';
+            }
+        }
+
+        function sortTable(field) {
+            if (currentSortField === field) {
+                currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortOrder = 'asc';
+            }
+            localStorage.setItem('admin/users/currentSortField', currentSortField);
+            localStorage.setItem('admin/users/currentSortOrder', currentSortOrder);
+            updateSortIndicators();
+            loadUsers();
+        }
+
+        document.getElementById("close-modal").onclick = function () {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById('confirm-delete').addEventListener('click', function (event) {
+            const formData = new FormData();
+
+            const username = document.getElementById("user-to-delete").textContent;
+
+            modal.style.display = "none";
+            errorMessageDiv.style.display = 'none';
+
+            const encryptedUsername = encryptor.encrypt(username);
+            formData.append("username", encryptedUsername);
+
+            fetch('/admin/delete_user', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    }
+                    else {
+                        location.reload();
+                    }
+                } else if (response.status === 403 || response.status === 400) {
+                    return response.text().then(text => {
+                        errorMessageDiv.textContent = text;
+                        errorMessageDiv.style.display = 'block';
+                    });
+                } else {
+                    response.text()
+                    .then(text => {
+                        throw new Error('Unexpected response: ' + response.status + " " + text);
+                    });
+                }
+            })
+            .catch(error => {
+                errorMessageDiv.textContent = 'Error: ' + error.message;
+                errorMessageDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

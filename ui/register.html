@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 1.5s ease;
+        }
+
+            button:hover {
+                background-color: #218838;
+            }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+            .login-link a {
+                text-decoration: none;
+                color: #007bff;
+            }
+
+                .login-link a:hover {
+                    text-decoration: underline;
+                }
+
+        .error-message {
+            color: red;
+            background-color: mistyrose;
+            border-radius: 5px;
+            font-size: 15px;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 7px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <div class="error-message" id="error-message"></div>
+        <form id="register-form">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Register</button>
+        </form>
+        <div class="login-link">
+            <a href="/login">Login</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const errorMessageDiv = document.getElementById('error-message');
+
+            const username = formData.get("username");
+            const password = formData.get("password");
+
+            const hasLower = /[a-z]/.test(password);
+            const hasUpper = /[A-Z]/.test(password);
+            const hasDigit = /\d/.test(password);
+            const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+
+            const complexity = [hasLower, hasUpper, hasDigit, hasSpecial].filter(Boolean).length;
+
+            if (password.length < 8 || complexity < 2) {
+                errorMessageDiv.textContent = "Password must be at least 8 characters long and contain at least two of: lowercase, uppercase, digit, special character.";
+                errorMessageDiv.style.display = 'block';
+                return false;
+            } else {
+                errorMessageDiv.style.display = 'none';
+            }
+
+            const encryptor = new JSEncrypt();
+
+            fetch('/public_key')
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    response.text()
+                    .then(text => {
+                        throw new Error('Unexpected response: ' + response.status + " " + text);
+                    });
+                }
+            })
+            .then(text => {
+                encryptor.setPublicKey(text);
+
+                const encryptedUsername = encryptor.encrypt(username);
+                const encryptedPassword = encryptor.encrypt(password);
+                formData.set("username", encryptedUsername);
+                formData.set("password", encryptedPassword);
+
+                return fetch('/register', {
+                    method: 'POST',
+                    body: formData,
+                });
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = response.url;
+                } else if (response.status === 400) {
+                    return response.text();
+                } else {
+                    response.text()
+                    .then(text => {
+                        throw new Error('Unexpected response: ' + response.status + " " + text);
+                    });
+                }
+            })
+            .then(text => {
+                errorMessageDiv.textContent = text;
+                errorMessageDiv.style.display = 'block';
+            })
+            .catch(error => {
+                errorMessageDiv.textContent = 'Error: ' + error.message;
+                errorMessageDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -29,5 +29,5 @@ add_subdirectory(lib/mbedtls)
 include_directories(lib/mbedtls/include)
 #link_directories(lib/mbedtls)
 
-add_executable(ServerExt main.cpp userdb.cpp session.cpp filedb.cpp)
-target_link_libraries(ServerExt argon2 base64 sqlite3 mbedcrypto)
+add_executable(server main.cpp userdb.cpp session.cpp filedb.cpp)
+target_link_libraries(server argon2 base64 sqlite3 mbedcrypto)

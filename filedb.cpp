@@ -3,7 +3,6 @@
 #include <ctime>
 #include <sstream>
 #include <algorithm>
-#include <Argon2/argon2.h>
 #include <base64.hpp>
 #include "filedb.h"
 

@@ -1,6 +1,7 @@
 #include "session.h"
 #include <random>
 #include <chrono>
+#include <algorithm>
 
 std::string SessionManager::generateSessionId() {
     std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";

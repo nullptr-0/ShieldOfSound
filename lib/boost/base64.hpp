@@ -42,6 +42,7 @@
 #include <cctype>
 #include <string>
 #include <utility>
+#include <cstdint>
 
 namespace base64 {
 

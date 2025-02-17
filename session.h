@@ -2,6 +2,7 @@
 #include <string>
 #include <ctime>
 #include <chrono>
+#include <vector>
 
 struct Session {
     std::string username;

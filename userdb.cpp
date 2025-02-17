@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
+#include <cstring>
+#include <algorithm>
 #include <Argon2/argon2.h>
 #include <base64.hpp>
 #include "userdb.h"

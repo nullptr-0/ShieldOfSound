@@ -13,6 +13,7 @@
 #ifndef __ARGON2_H__
 #define __ARGON2_H__
 
+#include <cstdint>
 #include <cstddef>
 #include <limits.h>
 
